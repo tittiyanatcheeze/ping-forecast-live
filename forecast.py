@@ -1,21 +1,22 @@
 """
 Ping Forecast (live, cloud) - inference-only daily job.
 
-Self-contained: uses pre-trained XGBoost models (models/*.json) and the
-set_1b column list (assets/feature_cols_1b.json). No thesis data, no
-training. Runs on a GitHub Actions runner:
+Self-contained: pre-trained models + assets, no thesis data, no training.
+Models per lead (1,2,3,4,7):
+  persistence   Q(t+L) = Q(t)
+  xgb_1a        XGBoost, P.1 lags only (autoregressive baseline)      [json]
+  xgb_1b        XGBoost, 4-station lags                               [json]
+  xgb_1b_nwp    XGBoost, 4-station lags + accumulated NWP rain        [json]
+  lstm_1b       LSTM(30-day sequence of set_1b, scaled), reference    [onnx]
 
-  1. Fetch 14 days of daily discharge for P.1/P.67/P.20/P.75 (RID Region 1).
-  2. Fetch the 7-day NWP rain forecast at P.1 (Open-Meteo).
-  3. Build set_1b features for origin = last complete day; forecast leads
-     1,2,3,4,7 with persistence, xgb_1b, and xgb_1b_nwp.
-  4. Append to forecast_log.csv (state, committed back by the workflow).
-  5. Verify matured rows against observations; roll up MAE/bias.
-  6. Render docs/index.html from template.html.
+Steps: fetch ~42 days discharge (RID) + 7-day rain (Open-Meteo) -> build
+features for origin = last complete day -> forecast -> append/verify
+forecast_log.csv -> render docs/index.html.
 
-Models were trained in the thesis pipeline (identical params). Endpoint
-values are the PROVISIONAL RID revision (~2-3 m3/s off the thesis dataset
-at P.1) - live demo / prospective verification only, never for retraining.
+The LSTM runs via onnxruntime (no PyTorch needed). On startup it self-tests
+each ONNX model against a stored torch reference and aborts on mismatch.
+Endpoint values are the PROVISIONAL RID revision (~2-3 m3/s off the thesis
+dataset at P.1) - live demo / prospective verification only.
 """
 import os, sys, json, re, random, urllib.request
 from datetime import datetime, timedelta, date
@@ -26,16 +27,20 @@ random.seed(42)
 import numpy as np
 import pandas as pd
 import xgboost as xgb
+import onnxruntime as ort
 np.random.seed(42)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(ROOT, "models")
+ASSET_DIR = os.path.join(ROOT, "assets")
 LOG_CSV = os.path.join(ROOT, "forecast_log.csv")
 DOCS = os.path.join(ROOT, "docs")
 
 FLOOD_THRESHOLD = 416
 STATIONS = {"P.1": "p1", "P.67": "p67", "P.20": "p20", "P.75": "p75"}
+SUFF2ID = {v: k for k, v in STATIONS.items()}
 LEADS = [1, 2, 3, 4, 7]
+SEQ_LEN = 30
 LAT, LON = 18.79, 98.98
 
 WATER_URL = ("https://www.hydro-1.net/Data/HD-04/water_today/"
@@ -44,8 +49,37 @@ RAIN_FC_URL = ("https://api.open-meteo.com/v1/forecast"
                f"?latitude={LAT}&longitude={LON}"
                "&daily=precipitation_sum&forecast_days=8&timezone=Asia/Bangkok")
 
-with open(os.path.join(ROOT, "assets", "feature_cols_1b.json")) as f:
+with open(os.path.join(ASSET_DIR, "feature_cols_1b.json")) as f:
     COLS_1B = json.load(f)
+with open(os.path.join(ASSET_DIR, "feature_cols_1a.json")) as f:
+    COLS_1A = json.load(f)
+with open(os.path.join(ASSET_DIR, "scaler_1b.json")) as f:
+    _sc = json.load(f)
+assert _sc["cols"] == COLS_1B, "scaler column order != set_1b"
+SC_MEAN = np.array(_sc["mean"], dtype=np.float32)
+SC_SCALE = np.array(_sc["scale"], dtype=np.float32)
+# parse each set_1b column into (station_id, lag): "Discharge_p67_lag3" -> ("P.67", 3)
+COL_PARSE = [(SUFF2ID[c.split("_")[1]], int(c.split("lag")[1])) for c in COLS_1B]
+
+_ort = {}
+def lstm_session(lead):
+    if lead not in _ort:
+        _ort[lead] = ort.InferenceSession(
+            os.path.join(MODEL_DIR, f"lstm_1b_lead{lead}.onnx"),
+            providers=["CPUExecutionProvider"])
+    return _ort[lead]
+
+
+def lstm_selftest():
+    with open(os.path.join(ASSET_DIR, "lstm_selftest.json")) as f:
+        st = json.load(f)
+    for lead_s, d in st.items():
+        arr = np.array(d["input"], dtype=np.float32).reshape(1, SEQ_LEN, len(COLS_1B))
+        out = float(lstm_session(int(lead_s)).run(None, {"seq": arr})[0].ravel()[0])
+        if abs(out - d["expected"]) > 1e-2:
+            raise SystemExit(
+                f"LSTM ONNX self-test FAILED lead{lead_s}: {out:.5f} vs {d['expected']:.5f}")
+    print("  LSTM ONNX self-test passed (onnx == torch reference)")
 
 
 def fetch_jsonp(url):
@@ -64,9 +98,12 @@ def to_float(v):
         return np.nan
 
 
-def fetch_water_window(end_day):
+def fetch_water_window(end_day, days=SEQ_LEN + 12):
+    """Daily discharge for ~`days` back. Endpoint returns 7 days/request."""
     frames, p1_level = {}, {}
-    for req_day in (end_day, end_day - timedelta(days=7)):
+    n_req = (days + 6) // 7
+    for j in range(n_req):
+        req_day = end_day - timedelta(days=7 * j)
         data = fetch_jsonp(WATER_URL.format(d=req_day.isoformat()))
         items = data if isinstance(data, list) else data.get("data", [])
         for it in items:
@@ -81,8 +118,7 @@ def fetch_water_window(end_day):
             m = re.search(r"\d+", str(it.get("day3", "")))
             if m and int(m.group()) != (req_day - timedelta(days=2)).day:
                 raise RuntimeError(
-                    f"endpoint day ordering changed (day3={it.get('day3')!r}) "
-                    "- refusing to build lags")
+                    f"endpoint day ordering changed (day3={it.get('day3')!r})")
     q_df = pd.DataFrame(frames).sort_index()
     q_df.index = pd.to_datetime(q_df.index)
     return q_df, p1_level
@@ -97,19 +133,32 @@ def fetch_rain_forecast():
                             data["daily"]["precipitation_sum"])}
 
 
-def load_model(kind, lead):
+def load_xgb(kind, lead):
     path = os.path.join(MODEL_DIR, f"{kind}_lead{lead}.json")
-    if not os.path.exists(path):
-        raise SystemExit(f"missing model {path} - commit pre-trained models")
     m = xgb.XGBRegressor()
     m.load_model(path)
     return m
+
+
+def build_lstm_seq(q_df, origin):
+    """(1,30,28) scaled set_1b sequence ending at origin, or None if data missing."""
+    days = pd.date_range(origin - pd.Timedelta(days=SEQ_LEN - 1), origin)
+    seq = np.zeros((SEQ_LEN, len(COLS_1B)), dtype=np.float32)
+    for r, dd in enumerate(days):
+        for c, (station, lag) in enumerate(COL_PARSE):
+            src = dd - pd.Timedelta(days=lag)
+            if src not in q_df.index or pd.isna(q_df.loc[src, station]):
+                return None
+            seq[r, c] = q_df.loc[src, station]
+    seq = (seq - SC_MEAN) / SC_SCALE
+    return seq.reshape(1, SEQ_LEN, len(COLS_1B)).astype(np.float32)
 
 
 def main():
     now = datetime.now()
     origin = date.today() - timedelta(days=1)
     print(f"[{now:%Y-%m-%d %H:%M}] live forecast - origin {origin}")
+    lstm_selftest()
 
     q_df, p1_level = fetch_water_window(origin)
     rain_fc = fetch_rain_forecast()
@@ -124,7 +173,11 @@ def main():
     for sid, suff in STATIONS.items():
         for k in range(1, 8):
             feat[f"Discharge_{suff}_lag{k}"] = q_df.loc[o - pd.Timedelta(days=k), sid]
-    x_row = pd.DataFrame([feat])[COLS_1B]
+    x_1b = pd.DataFrame([feat])[COLS_1B]
+    x_1a = pd.DataFrame([feat])[COLS_1A]
+    seq = build_lstm_seq(q_df, o)
+    if seq is None:
+        print("  (LSTM sequence unavailable - insufficient history this run)")
 
     rows = []
     q_now = q_df.loc[o, "P.1"]
@@ -133,12 +186,15 @@ def main():
         rain_days = [rain_fc.get(o + pd.Timedelta(days=k), np.nan) for k in range(1, lead + 1)]
         rain_accum = float(np.nansum(rain_days)) if rain_days else 0.0
 
-        preds = {"persistence": float(q_now)}
-        preds["xgb_1b"] = float(load_model("xgb_1b", lead).predict(x_row)[0])
-        x2 = x_row.copy()
+        preds = {"persistence": float(q_now),
+                 "xgb_1a": float(load_xgb("xgb_1a", lead).predict(x_1a)[0]),
+                 "xgb_1b": float(load_xgb("xgb_1b", lead).predict(x_1b)[0])}
+        x2 = x_1b.copy()
         x2[f"rain_future_{lead}d"] = rain_accum
         preds["xgb_1b_nwp"] = float(
-            load_model("xgb_1b_nwp", lead).predict(x2[COLS_1B + [f"rain_future_{lead}d"]])[0])
+            load_xgb("xgb_1b_nwp", lead).predict(x2[COLS_1B + [f"rain_future_{lead}d"]])[0])
+        if seq is not None:
+            preds["lstm_1b"] = float(lstm_session(lead).run(None, {"seq": seq})[0].ravel()[0])
 
         for model_name, pred in preds.items():
             rows.append({
@@ -176,11 +232,11 @@ def main():
                         "bias": round(g["err"].mean(), 1)})
 
     hist = [{"date": d.date().isoformat(), "q": round(float(q_df.loc[d, "P.1"]), 1)}
-            for d in q_df.index if not pd.isna(q_df.loc[d, "P.1"])]
+            for d in q_df.index if not pd.isna(q_df.loc[d, "P.1"])][-21:]
     fc_out = [{"model": r["model"], "lead": int(r["lead"]),
                "target_date": r["target_date"], "predicted": float(r["predicted"])}
               for r in rows]
-    recent = lv.sort_values("target_date").tail(12)
+    recent = lv.sort_values("target_date").tail(15)
     payload = {
         "generated_at": now.strftime("%Y-%m-%d %H:%M"), "origin_date": origin.isoformat(),
         "flood_threshold": FLOOD_THRESHOLD,
