@@ -241,8 +241,9 @@ def main():
         "generated_at": now.strftime("%Y-%m-%d %H:%M"), "origin_date": origin.isoformat(),
         "flood_threshold": FLOOD_THRESHOLD,
         "p1_now": {"q": float(q_now), "level": p1_level.get(o, None), "level_limit": 3.70},
-        "p67_now": {"q": float(q_df.loc[o, "P.67"]),
-                    "q_prev": float(q_df.loc[o - pd.Timedelta(days=1), "P.67"])},
+        "upstream": [{"name": st, "q": float(q_df.loc[o, st]),
+                      "q_prev": float(q_df.loc[o - pd.Timedelta(days=1), st])}
+                     for st in ["P.67", "P.20", "P.75"]],
         "history": hist, "forecasts": fc_out,
         "rain_forecast": [{"date": d.date().isoformat(), "mm": round(float(v), 1)}
                           for d, v in sorted(rain_fc.items()) if not pd.isna(v)][:8],

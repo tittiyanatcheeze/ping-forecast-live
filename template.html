@@ -6,332 +6,363 @@
 <title>Ping Forecast — P.1 เชียงใหม่</title>
 <style>
 :root{
-  --bg:#f4f4f2; --surface:#fcfcfb; --ink:#1f1e1d; --ink-2:#575553; --ink-3:#8a8886;
-  --line:#e6e4e1; --grid:#ececea;
-  --blue:#2a78d6; --red:#e34948; --aqua:#1baf7a; --violet:#4a3aa7;
-  --thresh:#eda100; --pers:#6b6b6b;
-  --good-bg:#e7f3e7; --good-ink:#006300; --warn-bg:#fdf3dc; --warn-ink:#8a5c00;
-  --crit-bg:#fde3e1; --crit-ink:#a11f1f;
+  --bg1:#ffffff; --bg2:#eaf4fb; --surface:#ffffff; --surface-2:#f5fafd;
+  --ink:#0f2f42; --ink-2:#4a6b7d; --ink-3:#8aa4b2; --line:#dce8f0;
+  --river-deep:#1a5da8; --river:#2f86d4; --river-lt:#7cc0ea; --foam:#eaf6fd;
+  --grid:#e8f1f7;
+  --persist:#8a97a6; --teal:#0f9e8e; --violet:#7458d4; --blue:#2f86d4; --warm:#e2622a;
+  --thresh:#e39a2b; --good-bg:#e2f5ea; --good:#0a8a4f;
+  --watch-bg:#fdf1d8; --watch:#a9720c; --flood-bg:#fde3e0; --flood:#c02f28;
+  --shadow:0 6px 22px rgba(23,84,133,.08), 0 1px 3px rgba(23,84,133,.06);
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#191817; --surface:#232221; --ink:#eceae7; --ink-2:#b3b0ac; --ink-3:#807d79;
-    --line:#3a3937; --grid:#2e2d2b;
-    --blue:#3987e5; --red:#e66767; --aqua:#199e70; --violet:#9085e9;
-    --thresh:#c98500; --pers:#9a9895;
-    --good-bg:#1d2b1d; --good-ink:#7fd67f; --warn-bg:#2e2618; --warn-ink:#eda100;
-    --crit-bg:#33201f; --crit-ink:#f09a9a;
-  }
-}
-*{box-sizing:border-box; margin:0}
+*{box-sizing:border-box;margin:0}
 body{
-  background:var(--bg); color:var(--ink);
+  background:linear-gradient(170deg,var(--bg1) 0%,var(--bg2) 100%);
+  background-attachment:fixed; min-height:100vh; color:var(--ink);
   font:15px/1.55 "Noto Sans Thai","Sarabun","Segoe UI",system-ui,sans-serif;
-  padding:20px 14px 40px;
+  padding:22px 15px 46px; -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1080px; margin:0 auto; display:grid; gap:14px}
-header{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 16px}
-h1{font-size:1.35rem; font-weight:700}
-h1 .wave{margin-right:6px}
-.sub{color:var(--ink-2); font-size:.85rem}
-.pill{padding:3px 12px; border-radius:99px; font-size:.8rem; font-weight:600}
-.pill.ok{background:var(--good-bg); color:var(--good-ink)}
-.pill.watch{background:var(--warn-bg); color:var(--warn-ink)}
-.pill.flood{background:var(--crit-bg); color:var(--crit-ink)}
-.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px}
-.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 18px}
-.tile .k{font-size:.78rem; color:var(--ink-2); margin-bottom:2px}
-.tile .v{font-size:1.55rem; font-weight:700; letter-spacing:-.01em}
-.tile .v small{font-size:.85rem; font-weight:500; color:var(--ink-2)}
-.tile .note{font-size:.75rem; color:var(--ink-3); margin-top:4px}
-.card h2{font-size:.95rem; font-weight:700; margin-bottom:2px}
-.card .hint{font-size:.78rem; color:var(--ink-3); margin-bottom:10px}
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:0 4px}
+h1{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.sub{color:var(--ink-2);font-size:.85rem}
+.pill{padding:4px 14px;border-radius:99px;font-size:.82rem;font-weight:700;letter-spacing:.01em}
+.pill.ok{background:var(--good-bg);color:var(--good)}
+.pill.watch{background:var(--watch-bg);color:var(--watch)}
+.pill.flood{background:var(--flood-bg);color:var(--flood)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.pad{padding:18px 20px}
+.card h2{font-size:1rem;font-weight:750;letter-spacing:-.01em}
+.hint{font-size:.79rem;color:var(--ink-3);margin-top:2px}
+
+/* ── Hero river ─────────────────────────────────────────── */
+.hero{position:relative;overflow:hidden;padding:0}
+.hero svg{display:block;width:100%;height:auto}
+.riverflow{stroke-dasharray:16 26;animation:flow 2.4s linear infinite}
+.riverflow.s2{animation-duration:3.4s;opacity:.6}
+.riverflow.s3{animation-duration:4.6s;opacity:.4}
+@keyframes flow{to{stroke-dashoffset:-336}}
+@media (prefers-reduced-motion:reduce){.riverflow,.particle{animation:none!important}.particle{opacity:.5}}
+
+/* ── Stat tiles ─────────────────────────────────────────── */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.tile .k{font-size:.78rem;color:var(--ink-2);margin-bottom:3px}
+.tile .v{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.tile .v small{font-size:.8rem;font-weight:600;color:var(--ink-2)}
+.tile .note{font-size:.75rem;color:var(--ink-3);margin-top:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media (max-width:760px){.grid2{grid-template-columns:1fr}}
-.legend{display:flex; flex-wrap:wrap; gap:4px 16px; font-size:.78rem; color:var(--ink-2); margin-bottom:6px}
-.legend .sw{display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:5px}
+.legend{display:flex;flex-wrap:wrap;gap:5px 15px;font-size:.78rem;color:var(--ink-2);margin:8px 0 4px}
+.legend .sw{display:inline-block;width:15px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
 svg text{font-family:inherit}
-.tooltip{
-  position:fixed; pointer-events:none; z-index:10; display:none;
-  background:var(--surface); border:1px solid var(--line); border-radius:10px;
-  padding:8px 11px; font-size:.78rem; box-shadow:0 4px 18px rgba(0,0,0,.13); min-width:150px;
-}
-.tooltip b{display:block; margin-bottom:3px}
-.tooltip .row{display:flex; justify-content:space-between; gap:14px}
+.tooltip{position:fixed;pointer-events:none;z-index:20;display:none;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:.78rem;
+  box-shadow:0 8px 26px rgba(23,84,133,.16);min-width:158px}
+.tooltip b{display:block;margin-bottom:4px;color:var(--ink)}
+.tooltip .row{display:flex;justify-content:space-between;gap:14px}
 .tooltip .row span:first-child{color:var(--ink-2)}
-table{width:100%; border-collapse:collapse; font-size:.82rem}
-th{color:var(--ink-2); font-weight:600; text-align:left; padding:6px 8px; border-bottom:1px solid var(--line)}
-td{padding:6px 8px; border-bottom:1px solid var(--grid)}
-td.num{text-align:right; font-variant-numeric:tabular-nums}
-.err-pos{color:var(--crit-ink)} .err-neg{color:var(--blue)}
-.empty{color:var(--ink-3); font-size:.85rem; padding:18px 0; text-align:center}
-footer{font-size:.75rem; color:var(--ink-3); line-height:1.7}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{color:var(--ink-2);font-weight:650;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+td{padding:7px 8px;border-bottom:1px solid var(--grid)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.err-pos{color:var(--flood)}.err-neg{color:var(--blue)}
+.empty{color:var(--ink-3);font-size:.85rem;padding:22px 0;text-align:center}
+.mchip{font-size:.72rem;padding:1px 9px;border-radius:99px;border:1px solid var(--line)}
+footer{font-size:.75rem;color:var(--ink-3);line-height:1.75}
 footer b{color:var(--ink-2)}
-.mchip{font-size:.72rem; padding:1px 8px; border-radius:99px; border:1px solid var(--line); color:var(--ink-2)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1><span class="wave">🌊</span>Ping Forecast — P.1 เชียงใหม่</h1>
+    <h1>💧 Ping Forecast — P.1 เชียงใหม่</h1>
     <span id="status" class="pill ok">ปกติ</span>
     <span class="sub" id="meta"></span>
   </header>
 
+  <!-- ── Hero river ── -->
+  <div class="card hero">
+    <svg id="river" viewBox="0 0 1000 250" preserveAspectRatio="xMidYMid meet" role="img" aria-label="river">
+      <defs>
+        <linearGradient id="chan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8fcaf0"/><stop offset="1" stop-color="#3384cf"/>
+        </linearGradient>
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#1a5da8" flood-opacity="0.18"/>
+        </filter>
+      </defs>
+
+      <!-- three upstream tributaries feeding the main channel -->
+      <g fill="none" stroke-linecap="round">
+        <path d="M40,54 C170,54 250,96 330,110" stroke="url(#chan)" stroke-width="13"/>
+        <path d="M40,125 C180,125 250,120 330,120" stroke="url(#chan)" stroke-width="13"/>
+        <path d="M40,196 C170,196 250,140 330,130" stroke="url(#chan)" stroke-width="13"/>
+        <path class="riverflow" d="M40,54 C170,54 250,96 330,110" stroke="#eaf6fd" stroke-width="3"/>
+        <path class="riverflow s2" d="M40,125 C180,125 250,120 330,120" stroke="#eaf6fd" stroke-width="3"/>
+        <path class="riverflow s3" d="M40,196 C170,196 250,140 330,130" stroke="#eaf6fd" stroke-width="3"/>
+      </g>
+
+      <!-- main channel: gentle flowing band toward P.1 -->
+      <path d="M322,100 C470,90 600,116 742,112 L742,150 C600,154 470,150 322,140 Z" fill="url(#chan)"/>
+      <g fill="none" stroke-linecap="round">
+        <path class="riverflow"    d="M330,120 C470,111 600,133 740,129" stroke="#eaf6fd" stroke-width="3.4"/>
+        <path class="riverflow s2" d="M330,113 C470,104 600,126 740,121" stroke="#f4fcff" stroke-width="2.4"/>
+        <path class="riverflow s3" d="M330,127 C470,118 600,140 740,136" stroke="#ffffff" stroke-width="1.8"/>
+      </g>
+      <g fill="#f4fcff"><circle class="particle" cx="330" cy="120" r="3.2" opacity="0"/></g>
+
+      <g id="ups"></g>
+
+      <!-- P.1 station panel -->
+      <g filter="url(#soft)">
+        <rect x="742" y="34" width="236" height="182" rx="18" fill="#ffffff" stroke="#dce8f0"/>
+      </g>
+      <text x="762" y="64" font-size="14" font-weight="700" fill="#0f2f42">P.1 สะพานนวรัฐ</text>
+      <text x="762" y="82" font-size="11.5" fill="#8aa4b2">discharge ล่าสุด (เมื่อวาน)</text>
+      <text id="p1v" x="760" y="140" font-size="52" font-weight="800" fill="#1a5da8" letter-spacing="-1">–</text>
+      <text id="p1u" x="762" y="163" font-size="13" fill="#4a6b7d">m³/s</text>
+      <text id="p1lvl" x="762" y="188" font-size="12.5" fill="#4a6b7d">ระดับ – ม.</text>
+      <g id="p1flood"></g>
+    </svg>
+  </div>
+
   <div class="tiles">
-    <div class="card tile">
-      <div class="k">น้ำท่า P.1 ล่าสุด (เมื่อวาน)</div>
-      <div class="v" id="t-p1"></div>
-      <div class="note" id="t-p1n"></div>
+    <div class="card pad tile">
+      <div class="k">พยากรณ์สูงสุด 1–7 วัน</div>
+      <div class="v" id="t-max"></div>
+      <div class="note" id="t-maxn"></div>
     </div>
-    <div class="card tile">
-      <div class="k">P.67 ต้นน้ำ (สัญญาณนำ ~7–8 ชม.)</div>
-      <div class="v" id="t-p67"></div>
-      <div class="note" id="t-p67n"></div>
+    <div class="card pad tile">
+      <div class="k">ฝนพยากรณ์ 3 วันหน้า</div>
+      <div class="v" id="t-rain"></div>
+      <div class="note" id="t-rainn"></div>
     </div>
-    <div class="card tile">
-      <div class="k">ฝนพยากรณ์ 3 วันหน้า (Open-Meteo)</div>
-      <div class="v" id="t-rain3"></div>
-      <div class="note" id="t-rain7"></div>
-    </div>
-    <div class="card tile">
-      <div class="k">สมุดพยากรณ์สะสม</div>
+    <div class="card pad tile">
+      <div class="k">สมุดพยากรณ์สะสม (prospective)</div>
       <div class="v" id="t-log"></div>
       <div class="note" id="t-logn"></div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>ไฮโดรกราฟ + พยากรณ์ล่วงหน้า 1–7 วัน</h2>
-    <div class="hint">เส้นทึบ = ค่าจริง 14 วันหลังสุด · จุดหลังเส้นประแนวตั้ง = คำพยากรณ์จากวัน origin (ชี้เมาส์ดูค่า)</div>
+  <!-- hydrograph -->
+  <div class="card pad">
+    <h2>สายน้ำ P.1 — ค่าจริง 21 วัน + พยากรณ์ 1–7 วัน</h2>
+    <div class="hint">พื้นที่ฟ้าใต้เส้น = น้ำที่ไหลมาแล้ว · เลยเส้น “ตอนนี้” = พยากรณ์จาก 5 โมเดล (ชี้เมาส์เพื่อดูค่า)</div>
     <div class="legend" id="lg-main"></div>
     <div id="chart-main"></div>
   </div>
 
   <div class="grid2">
-    <div class="card">
-      <h2>ฝนพยากรณ์รายวัน (จุดกริด P.1)</h2>
-      <div class="hint">precipitation_sum — Open-Meteo Forecast API</div>
+    <div class="card pad">
+      <h2>ฝนพยากรณ์รายวัน</h2>
+      <div class="hint">precipitation_sum ที่จุดกริด P.1 — Open-Meteo</div>
       <div id="chart-rain"></div>
     </div>
-    <div class="card">
-      <h2>ความแม่นสะสม (prospective)</h2>
-      <div class="hint">MAE ของคำพยากรณ์ที่เฉลยแล้วเท่านั้น — ทำนายก่อน เฉลยทีหลัง ไม่มีทาง leak</div>
+    <div class="card pad">
+      <h2>ความแม่นสะสม</h2>
+      <div class="hint">MAE ของคำพยากรณ์ที่เฉลยแล้ว — ทำนายก่อน เฉลยทีหลัง</div>
       <div class="legend" id="lg-acc"></div>
       <div id="chart-acc"></div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card pad">
     <h2>เฉลยล่าสุด</h2>
-    <div class="hint">คำพยากรณ์ที่ถึงกำหนดและเทียบกับค่าจริงแล้ว (ใหม่สุดอยู่ล่าง)</div>
+    <div class="hint">คำพยากรณ์ที่ถึงกำหนดและเทียบค่าจริงแล้ว (ใหม่สุดอยู่ล่าง)</div>
     <div id="verify-table"></div>
   </div>
 
-  <div class="card">
+  <div class="card pad">
     <footer>
-      <b>หมายเหตุ:</b> ค่าจริงจาก endpoint RID ภาค 1 เป็นค่า provisional (ต่างจากชุดข้อมูลทีสิส ~2–3 m³/s ที่ P.1) ใช้เพื่อ demo/verify เท่านั้น ห้ามนำไป retrain ·
-      โมเดลเป็นรายวัน horizon 1–7 วัน (XGB set_1b = ใช้เฉพาะน้ำท่า 4 สถานี · XGB set_1b+NWP = เพิ่มฝนสะสมพยากรณ์แบบเดียวกับ Track B ของทีสิส) ·
-      ฝน NWP เป็นจุดกริดเดียวที่พิกัด P.1 · เกณฑ์น้ำท่วม 416 m³/s (ระดับตลิ่ง 3.70 ม.) ·
-      รีเฟรชข้อมูล: รัน <code>python app/job.py</code> หรือรอ Task Scheduler รอบถัดไป
+      <b>หมายเหตุ:</b> ค่าจริงจาก endpoint RID ภาค 1 เป็นค่า provisional (ต่างจากชุดข้อมูลทีสิส ~2–3 m³/s ที่ P.1) ใช้ demo/verify เท่านั้น ไม่นำไป retrain ·
+      5 โมเดลรายวัน horizon 1–7 วัน: persistence · XGB set_1a (P.1 เดี่ยว) · XGB set_1b · XGB set_1b + ฝน NWP · LSTM set_1b (reference, ONNX) ·
+      เกณฑ์น้ำท่วม 416 m³/s (ตลิ่ง 3.70 ม.) · อัปเดตอัตโนมัติทุกวันด้วย GitHub Actions
     </footer>
   </div>
 </div>
-
 <div class="tooltip" id="tip"></div>
 
 <script>
 const DATA = /*__DATA__*/null;
-const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const MODELS = {
-  persistence : {label:"Persistence (วันนี้=พรุ่งนี้)", color:()=>css("--pers"),   dash:"5 4", marker:"circle"},
-  xgb_1a      : {label:"XGB set_1a (P.1 เดี่ยว)",       color:()=>css("--aqua"),   dash:"1 3", marker:"circle"},
-  lstm_1b     : {label:"LSTM set_1b (reference)",       color:()=>css("--violet"), dash:"2 3", marker:"circle"},
-  xgb_1b      : {label:"XGB set_1b",                    color:()=>css("--blue"),   dash:"",    marker:"circle"},
-  xgb_1b_nwp  : {label:"XGB set_1b + ฝน NWP",           color:()=>css("--red"),    dash:"",    marker:"diamond"},
+  persistence:{label:"Persistence",           color:"var(--persist)", dash:"5 4", marker:"circle"},
+  xgb_1a:     {label:"XGB set_1a (P.1 เดี่ยว)", color:"var(--teal)",    dash:"1 4", marker:"circle"},
+  lstm_1b:    {label:"LSTM set_1b (reference)", color:"var(--violet)",  dash:"3 3", marker:"circle"},
+  xgb_1b:     {label:"XGB set_1b",             color:"var(--blue)",    dash:"",    marker:"circle"},
+  xgb_1b_nwp: {label:"XGB set_1b + ฝน NWP",    color:"var(--warm)",    dash:"",    marker:"diamond"},
 };
-const fmt1 = x => x==null||isNaN(x) ? "–" : (+x).toFixed(1);
-const thDate = iso => { const d=new Date(iso+"T00:00:00");
-  return d.toLocaleDateString("th-TH",{day:"numeric",month:"short"}); };
-const tip = document.getElementById("tip");
-function showTip(html,x,y){ tip.innerHTML=html; tip.style.display="block";
-  const r=tip.getBoundingClientRect();
-  tip.style.left=Math.min(x+14, innerWidth-r.width-8)+"px";
-  tip.style.top =Math.min(y+14, innerHeight-r.height-8)+"px"; }
-function hideTip(){ tip.style.display="none"; }
+const CV = v => getComputedStyle(document.documentElement).getPropertyValue(v.replace(/^var\(|\)$/g,"")).trim();
+const col = c => c.startsWith("var(")?CV(c):c;
+const fmt1 = x => x==null||isNaN(x)?"–":(+x).toFixed(1);
+const thDate = iso=>{const d=new Date(iso+"T00:00:00");return d.toLocaleDateString("th-TH",{day:"numeric",month:"short"});};
+const tip=document.getElementById("tip");
+function showTip(h,x,y){tip.innerHTML=h;tip.style.display="block";const r=tip.getBoundingClientRect();
+  tip.style.left=Math.min(x+14,innerWidth-r.width-8)+"px";tip.style.top=Math.min(y+14,innerHeight-r.height-8)+"px";}
+function hideTip(){tip.style.display="none";}
+const NS="http://www.w3.org/2000/svg";
+function elm(svg,n,a,t){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);
+  if(t!=null)e.textContent=t;svg.appendChild(e);return e;}
 
-// ── header + tiles ───────────────────────────────────────────────────
+// ── header + hero ─────────────────────────────────────────
 (function(){
-  const d=DATA, thr=d.flood_threshold;
-  document.getElementById("meta").textContent =
-    `อัปเดต ${d.generated_at} น. · วัน origin: ${thDate(d.origin_date)} (วันสมบูรณ์ล่าสุด)`;
-  const q=d.p1_now.q, st=document.getElementById("status");
-  const maxF = Math.max(...d.forecasts.map(f=>f.predicted));
-  if (q>thr || maxF>thr){ st.textContent="⚠ เสี่ยงน้ำท่วม"; st.className="pill flood"; }
-  else if (q>0.7*thr || maxF>0.7*thr){ st.textContent="เฝ้าระวัง"; st.className="pill watch"; }
-  else { st.textContent="ปกติ"; st.className="pill ok"; }
-  document.getElementById("t-p1").innerHTML = `${fmt1(q)} <small>m³/s</small>`;
-  document.getElementById("t-p1n").textContent =
-    `ระดับ ${fmt1(d.p1_now.level)} ม. / ตลิ่ง ${fmt1(d.p1_now.level_limit)} ม. · เกณฑ์ ${thr} m³/s`;
-  const p67=d.p67_now, dq=p67.q-p67.q_prev, arrow=dq>1?"▲":(dq<-1?"▼":"■");
-  document.getElementById("t-p67").innerHTML = `${fmt1(p67.q)} <small>m³/s ${arrow}</small>`;
-  document.getElementById("t-p67n").textContent =
-    `เทียบเมื่อวาน ${dq>=0?"+":""}${fmt1(dq)} · P.67 ขึ้นแรง = P.1 จะขึ้นตามในไม่กี่ชั่วโมง`;
-  const r=d.rain_forecast, r3=r.slice(1,4).reduce((s,x)=>s+x.mm,0),
-        r7=r.slice(1,8).reduce((s,x)=>s+x.mm,0);
-  document.getElementById("t-rain3").innerHTML = `${fmt1(r3)} <small>mm</small>`;
-  document.getElementById("t-rain7").textContent = `รวม 7 วัน ≈ ${fmt1(r7)} mm`;
-  document.getElementById("t-log").innerHTML =
-    `${d.n_verified}<small> / ${d.n_log_rows} เฉลยแล้ว</small>`;
-  document.getElementById("t-logn").textContent =
-    d.n_verified ? "ความแม่นสะสมอยู่การ์ดขวาล่าง" : "คำพยากรณ์ชุดแรกจะเฉลยพรุ่งนี้ ⏳";
+  const d=DATA,thr=d.flood_threshold,q=d.p1_now.q;
+  document.getElementById("meta").textContent=
+    `อัปเดต ${d.generated_at} น. · origin ${thDate(d.origin_date)} (วันสมบูรณ์ล่าสุด)`;
+  const maxF=Math.max(...d.forecasts.map(f=>f.predicted)), st=document.getElementById("status");
+  if(q>thr||maxF>thr){st.textContent="⚠ เสี่ยงน้ำท่วม";st.className="pill flood";}
+  else if(q>.7*thr||maxF>.7*thr){st.textContent="เฝ้าระวัง";st.className="pill watch";}
+  else{st.textContent="ปกติ";st.className="pill ok";}
+
+  const river=document.getElementById("river");
+  document.getElementById("p1v").textContent=fmt1(q);
+  document.getElementById("p1lvl").textContent=`ระดับ ${fmt1(d.p1_now.level)} ม. / ตลิ่ง ${fmt1(d.p1_now.level_limit)} ม.`;
+  const pct=Math.min(1,q/thr), fg=document.getElementById("p1flood");
+  elm(fg,"rect",{x:762,y:198,width:196,height:8,rx:4,fill:"#e8f1f7"});
+  elm(fg,"rect",{x:762,y:198,width:196*pct,height:8,rx:4,
+    fill:q>thr?col("var(--flood)"):q>.7*thr?col("var(--thresh)"):col("var(--river)")});
+
+  const ug=document.getElementById("ups"),ys=[54,125,196];
+  d.upstream.forEach((u,i)=>{const y=ys[i],dq=u.q-u.q_prev,ar=dq>1?"▲":dq<-1?"▼":"■";
+    const arc=dq>1?col("var(--flood)"):dq<-1?col("var(--good)"):col("var(--ink-3)");
+    elm(ug,"circle",{cx:44,cy:y,r:7,fill:"#fff",stroke:col("var(--river)"),"stroke-width":3});
+    elm(ug,"text",{x:60,y:y-6,"font-size":13,"font-weight":700,fill:col("var(--ink)")},u.name);
+    elm(ug,"text",{x:60,y:y+12,"font-size":12.5,fill:col("var(--ink-2)")},`${fmt1(u.q)} m³/s`);
+    elm(ug,"text",{x:120,y:y+12,"font-size":12,fill:arc},ar);});
+  elm(river,"text",{x:44,y:236,"font-size":11.5,fill:col("var(--ink-3)")},"ต้นน้ำ (สัญญาณนำ P.1 ~7–8 ชม.)");
+
+  const p=document.querySelector(".particle");
+  if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
+    let t=0;const path=[[330,120],[470,111],[600,133],[740,129]];
+    (function tick(){t=(t+0.0045)%1;const seg=Math.min(2,Math.floor(t*3)),f=t*3-seg;
+      const a=path[seg],b=path[seg+1];p.setAttribute("cx",a[0]+(b[0]-a[0])*f);
+      p.setAttribute("cy",a[1]+(b[1]-a[1])*f);p.setAttribute("opacity",Math.sin(t*Math.PI).toFixed(2));
+      requestAnimationFrame(tick);})();
+  }
+
+  document.getElementById("t-max").innerHTML=`${fmt1(maxF)} <small>m³/s</small>`;
+  document.getElementById("t-maxn").textContent=`สูงสุดจากทุกโมเดลใน 7 วัน · เกณฑ์ ${thr}`;
+  const r=d.rain_forecast,r3=r.slice(1,4).reduce((s,x)=>s+x.mm,0),r7=r.slice(1,8).reduce((s,x)=>s+x.mm,0);
+  document.getElementById("t-rain").innerHTML=`${fmt1(r3)} <small>mm</small>`;
+  document.getElementById("t-rainn").textContent=`รวม 7 วัน ≈ ${fmt1(r7)} mm`;
+  document.getElementById("t-log").innerHTML=`${d.n_verified}<small> / ${d.n_log_rows} เฉลยแล้ว</small>`;
+  document.getElementById("t-logn").textContent=d.n_verified?"ดูความแม่นรายโมเดลด้านล่าง":"ชุดแรกจะเฉลยพรุ่งนี้ ⏳";
 })();
 
-// ── main hydrograph + forecast fan ──────────────────────────────────
+// ── hydrograph with water fill ────────────────────────────
 (function(){
-  const d=DATA, hist=d.history, thr=d.flood_threshold;
-  const days=[...hist.map(h=>h.date)];
+  const d=DATA,hist=d.history,thr=d.flood_threshold;
+  const days=hist.map(h=>h.date),origin=d.origin_date;
   const leads=[...new Set(d.forecasts.map(f=>f.lead))].sort((a,b)=>a-b);
-  const origin=d.origin_date;
-  const addDays=(iso,n)=>{const t=new Date(iso+"T00:00:00");t.setDate(t.getDate()+n);
-    const p=x=>String(x).padStart(2,"0");
-    return `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}`;};
-  for(let k=1;k<=Math.max(...leads);k++) days.push(addDays(origin,k));
-  const W=980,H=330,L=52,R=14,T=16,B=40,IW=W-L-R,IH=H-T-B;
+  const addD=(iso,n)=>{const t=new Date(iso+"T00:00:00");t.setDate(t.getDate()+n);
+    const p=x=>String(x).padStart(2,"0");return `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}`;};
+  for(let k=1;k<=Math.max(...leads);k++)days.push(addD(origin,k));
+  const W=980,H=340,L=48,R=16,T=18,B=40,IW=W-L-R,IH=H-T-B;
   const x=i=>L+IW*(i/(days.length-1));
-  const vmax=Math.max(thr*1.15, ...hist.map(h=>h.q), ...d.forecasts.map(f=>f.predicted))*1.08;
+  const vmax=Math.max(thr*1.1,...hist.map(h=>h.q),...d.forecasts.map(f=>f.predicted))*1.08;
   const y=v=>T+IH*(1-v/vmax);
   const iOf=Object.fromEntries(days.map((dd,i)=>[dd,i]));
-  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" id="svg-main">`;
+  const svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("style","width:100%;height:auto");svg.id="svg-main";
+  svg.innerHTML=`<defs><linearGradient id="wfill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#6fb8e8" stop-opacity="0.5"/>
+    <stop offset="1" stop-color="#bfe3f6" stop-opacity="0.04"/></linearGradient></defs>`;
+  const add=(n,a,t)=>elm(svg,n,a,t);
   for(let g=0;g<=4;g++){const v=vmax*g/4;
-    s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--grid")}"/>`+
-       `<text x="${L-7}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="${css("--ink-3")}">${Math.round(v)}</text>`;}
-  s+=`<line x1="${L}" x2="${W-R}" y1="${y(thr)}" y2="${y(thr)}" stroke="${css("--thresh")}" stroke-dasharray="3 4" stroke-width="1.6"/>`+
-     `<text x="${W-R}" y="${y(thr)-6}" text-anchor="end" font-size="11" fill="${css("--thresh")}">เกณฑ์น้ำท่วม ${thr}</text>`;
+    add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:col("var(--grid)")});
+    add("text",{x:L-8,y:y(v)+4,"text-anchor":"end","font-size":11,fill:col("var(--ink-3)")},Math.round(v));}
+  add("line",{x1:L,x2:W-R,y1:y(thr),y2:y(thr),stroke:col("var(--thresh)"),"stroke-dasharray":"4 4","stroke-width":1.6});
+  add("text",{x:W-R,y:y(thr)-6,"text-anchor":"end","font-size":11,fill:col("var(--thresh)")},`เกณฑ์น้ำท่วม ${thr}`);
+  const hp=hist.map((h,i)=>`${i?"L":"M"}${x(iOf[h.date])},${y(h.q)}`).join(" ");
+  add("path",{d:hp+` L${x(iOf[hist[hist.length-1].date])},${y(0)} L${x(0)},${y(0)} Z`,fill:"url(#wfill)"});
   const xo=x(iOf[origin]);
-  s+=`<line x1="${xo}" x2="${xo}" y1="${T}" y2="${T+IH}" stroke="${css("--ink-3")}" stroke-dasharray="2 4"/>`+
-     `<text x="${xo}" y="${T+IH+30}" text-anchor="middle" font-size="11" fill="${css("--ink-2")}">origin</text>`;
-  days.forEach((dd,i)=>{ if(i%2===0)
-    s+=`<text x="${x(i)}" y="${T+IH+16}" text-anchor="middle" font-size="10.5" fill="${css("--ink-3")}">${thDate(dd)}</text>`;});
-  s+=`<path d="${hist.map((h,i)=>(i?"L":"M")+x(iOf[h.date])+" "+y(h.q)).join(" ")}"
-       fill="none" stroke="${css("--ink")}" stroke-width="2.2" stroke-linejoin="round"/>`;
-  const lgm=document.getElementById("lg-main");
-  lgm.innerHTML=`<span><span class="sw" style="background:${css("--ink")}"></span>ค่าจริง P.1</span>`;
+  add("line",{x1:xo,x2:xo,y1:T,y2:T+IH,stroke:col("var(--ink-3)"),"stroke-dasharray":"2 4"});
+  add("text",{x:xo,y:T+IH+30,"text-anchor":"middle","font-size":11,fill:col("var(--ink-2)")},"ตอนนี้");
+  days.forEach((dd,i)=>{if(i%2===0)add("text",{x:x(i),y:T+IH+16,"text-anchor":"middle","font-size":10.5,fill:col("var(--ink-3)")},thDate(dd));});
+  add("path",{d:hp,fill:"none",stroke:col("var(--river-deep)"),"stroke-width":2.6,"stroke-linejoin":"round"});
+  const lg=document.getElementById("lg-main");
+  lg.innerHTML=`<span><span class="sw" style="background:var(--river-deep)"></span>ค่าจริง P.1</span>`;
+  const lastQ=hist[hist.length-1].q;
   for(const[m,cfg]of Object.entries(MODELS)){
-    const pts=[[iOf[origin],hist[hist.length-1].q],
-      ...d.forecasts.filter(f=>f.model===m).sort((a,b)=>a.lead-b.lead)
-        .map(f=>[iOf[f.target_date],f.predicted])];
-    const col=cfg.color();
-    s+=`<path d="${pts.map((p,i)=>(i?"L":"M")+x(p[0])+" "+y(p[1])).join(" ")}"
-        fill="none" stroke="${col}" stroke-width="2" ${cfg.dash?`stroke-dasharray="${cfg.dash}"`:""} opacity=".95"/>`;
-    pts.slice(1).forEach(p=>{ s+= cfg.marker==="diamond"
-      ? `<rect x="${x(p[0])-4}" y="${y(p[1])-4}" width="8" height="8" fill="${col}" stroke="${css("--surface")}" stroke-width="2" transform="rotate(45 ${x(p[0])} ${y(p[1])})"/>`
-      : `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="4.5" fill="${col}" stroke="${css("--surface")}" stroke-width="2"/>`;});
-    lgm.innerHTML+=`<span><span class="sw" style="background:${col}"></span>${cfg.label}</span>`;
+    const pts=[[iOf[origin],lastQ],...d.forecasts.filter(f=>f.model===m).sort((a,b)=>a.lead-b.lead)
+      .map(f=>[iOf[f.target_date],f.predicted])];
+    const c=col(cfg.color);
+    add("path",{d:pts.map((p,i)=>`${i?"L":"M"}${x(p[0])},${y(p[1])}`).join(" "),fill:"none",stroke:c,
+      "stroke-width":2,"stroke-dasharray":cfg.dash||"none","stroke-opacity":.95});
+    pts.slice(1).forEach(p=>{
+      if(cfg.marker==="diamond"){const s=4;add("rect",{x:x(p[0])-s,y:y(p[1])-s,width:2*s,height:2*s,fill:c,
+        stroke:"#fff","stroke-width":1.6,transform:`rotate(45 ${x(p[0])} ${y(p[1])})`});}
+      else add("circle",{cx:x(p[0]),cy:y(p[1]),r:4,fill:c,stroke:"#fff","stroke-width":1.6});});
+    lg.innerHTML+=`<span><span class="sw" style="background:${c}"></span>${cfg.label}</span>`;
   }
-  s+=`<line id="xh" x1="0" x2="0" y1="${T}" y2="${T+IH}" stroke="${css("--ink-3")}" stroke-width="1" visibility="hidden"/>`;
-  s+=`<rect x="${L}" y="${T}" width="${IW}" height="${IH}" fill="transparent"/></svg>`;
-  const el=document.getElementById("chart-main"); el.innerHTML=s;
-  const svg=document.getElementById("svg-main"), xh=svg.querySelector("#xh");
+  const xh=add("line",{x1:0,x2:0,y1:T,y2:T+IH,stroke:col("var(--ink-3)"),"stroke-width":1,visibility:"hidden"});
+  add("rect",{x:L,y:T,width:IW,height:IH,fill:"transparent"});
+  document.getElementById("chart-main").appendChild(svg);
   svg.addEventListener("mousemove",ev=>{
-    const r=svg.getBoundingClientRect(), sx=W/r.width;
-    const px=(ev.clientX-r.left)*sx;
+    const rc=svg.getBoundingClientRect(),sx=W/rc.width,px=(ev.clientX-rc.left)*sx;
     const i=Math.max(0,Math.min(days.length-1,Math.round((px-L)/(IW/(days.length-1)))));
-    xh.setAttribute("x1",x(i)); xh.setAttribute("x2",x(i)); xh.setAttribute("visibility","visible");
-    const dd=days[i]; let html=`<b>${thDate(dd)}</b>`;
-    const h=hist.find(h=>h.date===dd);
-    if(h) html+=`<div class="row"><span>ค่าจริง</span><span>${fmt1(h.q)}</span></div>`;
-    for(const[m,cfg]of Object.entries(MODELS)){
-      const f=d.forecasts.find(f=>f.model===m&&f.target_date===dd);
-      if(f) html+=`<div class="row"><span style="color:${cfg.color()}">●</span>`+
-                  `<span>${fmt1(f.predicted)} <span style="color:${css('--ink-3')}">(+${f.lead}d)</span></span></div>`;
-    }
-    showTip(html,ev.clientX,ev.clientY);
+    xh.setAttribute("x1",x(i));xh.setAttribute("x2",x(i));xh.setAttribute("visibility","visible");
+    const dd=days[i];let h=`<b>${thDate(dd)}</b>`;const hh=hist.find(z=>z.date===dd);
+    if(hh)h+=`<div class="row"><span>ค่าจริง</span><span>${fmt1(hh.q)}</span></div>`;
+    for(const[m,cfg]of Object.entries(MODELS)){const f=d.forecasts.find(z=>z.model===m&&z.target_date===dd);
+      if(f)h+=`<div class="row"><span style="color:${col(cfg.color)}">●</span><span>${fmt1(f.predicted)} <span style="color:var(--ink-3)">+${f.lead}d</span></span></div>`;}
+    showTip(h,ev.clientX,ev.clientY);
   });
-  svg.addEventListener("mouseleave",()=>{hideTip(); xh.setAttribute("visibility","hidden");});
+  svg.addEventListener("mouseleave",()=>{hideTip();xh.setAttribute("visibility","hidden");});
 })();
 
-// ── rain bars ────────────────────────────────────────────────────────
+// ── rain bars ─────────────────────────────────────────────
 (function(){
-  const r=DATA.rain_forecast; if(!r.length) return;
-  const W=460,H=190,L=34,R=8,T=12,B=30,IW=W-L-R,IH=H-T-B;
-  const vmax=Math.max(10,...r.map(x=>x.mm))*1.15;
-  const y=v=>T+IH*(1-v/vmax), bw=IW/r.length;
-  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
-  for(let g=0;g<=3;g++){const v=vmax*g/3;
-    s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--grid")}"/>`+
-       `<text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="${css("--ink-3")}">${Math.round(v)}</text>`;}
-  r.forEach((d,i)=>{
-    const bx=L+bw*i+bw*.18, bwid=bw*.64, by=y(d.mm);
-    s+=`<rect class="rb" data-i="${i}" x="${bx}" y="${by}" width="${bwid}" height="${T+IH-by}"
-         rx="2.5" fill="${css("--blue")}" stroke="${css("--surface")}" stroke-width="1.5"/>`+
-       `<text x="${bx+bwid/2}" y="${T+IH+15}" text-anchor="middle" font-size="10" fill="${css("--ink-3")}">${thDate(d.date)}</text>`;
-    if(d.mm>=1) s+=`<text x="${bx+bwid/2}" y="${by-5}" text-anchor="middle" font-size="10" fill="${css("--ink-2")}">${fmt1(d.mm)}</text>`;
-  });
-  s+="</svg>";
-  const el=document.getElementById("chart-rain"); el.innerHTML=s;
-  el.querySelectorAll(".rb").forEach(b=>{
-    b.addEventListener("mousemove",ev=>{const d=r[+b.dataset.i];
-      showTip(`<b>${thDate(d.date)}</b><div class="row"><span>ฝน</span><span>${fmt1(d.mm)} mm</span></div>`,ev.clientX,ev.clientY);});
-    b.addEventListener("mouseleave",hideTip);
-  });
+  const r=DATA.rain_forecast;if(!r.length)return;
+  const W=460,H=195,L=32,R=8,T=12,B=30,IW=W-L-R,IH=H-T-B;
+  const vmax=Math.max(10,...r.map(x=>x.mm))*1.15,y=v=>T+IH*(1-v/vmax),bw=IW/r.length;
+  const svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("style","width:100%;height:auto");
+  const add=(n,a,t)=>elm(svg,n,a,t);
+  for(let g=0;g<=3;g++){const v=vmax*g/3;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:col("var(--grid)")});
+    add("text",{x:L-6,y:y(v)+4,"text-anchor":"end","font-size":10,fill:col("var(--ink-3)")},Math.round(v));}
+  r.forEach((d,i)=>{const bx=L+bw*i+bw*.2,bwid=bw*.6,by=y(d.mm);
+    const rect=add("rect",{x:bx,y:by,width:bwid,height:T+IH-by,rx:3,fill:col("var(--river)")});
+    rect.addEventListener("mousemove",ev=>showTip(`<b>${thDate(d.date)}</b><div class="row"><span>ฝน</span><span>${fmt1(d.mm)} mm</span></div>`,ev.clientX,ev.clientY));
+    rect.addEventListener("mouseleave",hideTip);
+    add("text",{x:bx+bwid/2,y:T+IH+15,"text-anchor":"middle","font-size":10,fill:col("var(--ink-3)")},thDate(d.date));
+    if(d.mm>=1)add("text",{x:bx+bwid/2,y:by-5,"text-anchor":"middle","font-size":10,fill:col("var(--ink-2)")},fmt1(d.mm));});
+  document.getElementById("chart-rain").appendChild(svg);
 })();
 
-// ── accuracy (MAE by lead per model) ────────────────────────────────
+// ── accuracy ──────────────────────────────────────────────
 (function(){
-  const acc=DATA.accuracy;
-  const el=document.getElementById("chart-acc");
-  if(!acc.length){ el.innerHTML=`<div class="empty">ยังไม่มีคำพยากรณ์ที่เฉลยแล้ว — ชุดแรกจะครบกำหนดพรุ่งนี้ ⏳</div>`; return;}
+  const acc=DATA.accuracy,box=document.getElementById("chart-acc");
+  if(!acc.length){box.innerHTML=`<div class="empty">ยังไม่มีคำพยากรณ์ที่เฉลยแล้ว — ชุดแรกครบกำหนดพรุ่งนี้ ⏳</div>`;return;}
   const leads=[...new Set(acc.map(a=>a.lead))].sort((a,b)=>a-b);
   const models=Object.keys(MODELS).filter(m=>acc.some(a=>a.model===m));
-  const W=460,H=210,L=34,R=8,T=12,B=30,IW=W-L-R,IH=H-T-B;
-  const vmax=Math.max(...acc.map(a=>a.mae))*1.3+1;
-  const y=v=>T+IH*(1-v/vmax), gw=IW/leads.length, bw=Math.min(18,gw*.8/models.length);
-  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">`;
-  for(let g=0;g<=3;g++){const v=vmax*g/3;
-    s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--grid")}"/>`+
-       `<text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="${css("--ink-3")}">${Math.round(v)}</text>`;}
-  const lg=document.getElementById("lg-acc"); lg.innerHTML="";
-  models.forEach((m,mi)=>{
-    lg.innerHTML+=`<span><span class="sw" style="background:${MODELS[m].color()}"></span>${MODELS[m].label}</span>`;
-    leads.forEach((ld,li)=>{
-      const a=acc.find(a=>a.model===m&&a.lead===ld); if(!a) return;
-      const cx=L+gw*li+gw/2, bx=cx+(mi-models.length/2)*bw+1;
-      s+=`<rect class="ab" data-m="${m}" data-l="${ld}" x="${bx}" y="${y(a.mae)}" width="${bw-2}"
-           height="${T+IH-y(a.mae)}" rx="2.5" fill="${MODELS[m].color()}" stroke="${css("--surface")}" stroke-width="1.5"/>`;
-    });
-  });
-  leads.forEach((ld,li)=>{ s+=`<text x="${L+gw*li+gw/2}" y="${T+IH+16}" text-anchor="middle"
-      font-size="10.5" fill="${css("--ink-3")}">+${ld}d</text>`;});
-  s+=`<text x="${L-24}" y="${T-2}" font-size="10" fill="${css("--ink-3")}">MAE</text></svg>`;
-  el.innerHTML=s;
-  el.querySelectorAll(".ab").forEach(b=>{
-    b.addEventListener("mousemove",ev=>{
-      const a=acc.find(x=>x.model===b.dataset.m&&x.lead==b.dataset.l);
-      showTip(`<b>${MODELS[a.model].label} · +${a.lead}d</b>
-        <div class="row"><span>MAE</span><span>${fmt1(a.mae)} m³/s</span></div>
-        <div class="row"><span>bias</span><span>${a.bias>=0?"+":""}${fmt1(a.bias)}</span></div>
-        <div class="row"><span>n เฉลยแล้ว</span><span>${a.n}</span></div>`,ev.clientX,ev.clientY);});
-    b.addEventListener("mouseleave",hideTip);
-  });
+  const W=460,H=215,L=32,R=8,T=12,B=30,IW=W-L-R,IH=H-T-B;
+  const vmax=Math.max(...acc.map(a=>a.mae))*1.3+1,y=v=>T+IH*(1-v/vmax);
+  const gw=IW/leads.length,bw=Math.min(15,gw*.78/models.length);
+  const svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("style","width:100%;height:auto");
+  const add=(n,a,t)=>elm(svg,n,a,t);
+  for(let g=0;g<=3;g++){const v=vmax*g/3;add("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:col("var(--grid)")});
+    add("text",{x:L-6,y:y(v)+4,"text-anchor":"end","font-size":10,fill:col("var(--ink-3)")},Math.round(v));}
+  const lg=document.getElementById("lg-acc");lg.innerHTML="";
+  models.forEach((m,mi)=>{lg.innerHTML+=`<span><span class="sw" style="background:${col(MODELS[m].color)}"></span>${MODELS[m].label}</span>`;
+    leads.forEach((ld,li)=>{const a=acc.find(z=>z.model===m&&z.lead===ld);if(!a)return;
+      const cx=L+gw*li+gw/2,bx=cx+(mi-models.length/2)*bw+1;
+      const rect=add("rect",{x:bx,y:y(a.mae),width:bw-1.5,height:T+IH-y(a.mae),rx:2.5,fill:col(MODELS[m].color)});
+      rect.addEventListener("mousemove",ev=>showTip(`<b>${MODELS[m].label} · +${a.lead}d</b><div class="row"><span>MAE</span><span>${fmt1(a.mae)}</span></div><div class="row"><span>bias</span><span>${a.bias>=0?"+":""}${fmt1(a.bias)}</span></div><div class="row"><span>n</span><span>${a.n}</span></div>`,ev.clientX,ev.clientY));
+      rect.addEventListener("mouseleave",hideTip);});});
+  leads.forEach((ld,li)=>add("text",{x:L+gw*li+gw/2,y:T+IH+16,"text-anchor":"middle","font-size":10.5,fill:col("var(--ink-3)")},`+${ld}d`));
+  add("text",{x:L-22,y:T-2,"font-size":10,fill:col("var(--ink-3)")},"MAE");
+  box.appendChild(svg);
 })();
 
-// ── verification table ──────────────────────────────────────────────
+// ── verification table ────────────────────────────────────
 (function(){
-  const rows=DATA.recent_verified, el=document.getElementById("verify-table");
-  if(!rows.length){ el.innerHTML=`<div class="empty">ยังไม่มีเฉลย — กลับมาดูหลังรอบ job พรุ่งนี้</div>`; return;}
-  let h=`<table><tr><th>วันเป้าหมาย</th><th>โมเดล</th><th>lead</th>
-         <th style="text-align:right">พยากรณ์</th><th style="text-align:right">ค่าจริง</th>
-         <th style="text-align:right">คลาดเคลื่อน</th></tr>`;
-  rows.forEach(r=>{
-    const e=r.predicted-r.actual, cls=e>=0?"err-pos":"err-neg";
-    h+=`<tr><td>${thDate(r.target_date)}</td>
-        <td><span class="mchip" style="border-color:${MODELS[r.model].color()};color:${MODELS[r.model].color()}">${MODELS[r.model].label}</span></td>
-        <td>+${r.lead}d</td><td class="num">${fmt1(r.predicted)}</td>
-        <td class="num">${fmt1(r.actual)}</td>
-        <td class="num ${cls}">${e>=0?"+":""}${fmt1(e)}</td></tr>`;
-  });
-  el.innerHTML=h+"</table>";
+  const rows=DATA.recent_verified,box=document.getElementById("verify-table");
+  if(!rows.length){box.innerHTML=`<div class="empty">ยังไม่มีเฉลย — กลับมาดูหลังรอบ job พรุ่งนี้</div>`;return;}
+  let h=`<table><tr><th>วันเป้าหมาย</th><th>โมเดล</th><th>lead</th><th style="text-align:right">พยากรณ์</th><th style="text-align:right">ค่าจริง</th><th style="text-align:right">คลาดเคลื่อน</th></tr>`;
+  rows.forEach(r=>{const e=r.predicted-r.actual,c=col(MODELS[r.model].color);
+    h+=`<tr><td>${thDate(r.target_date)}</td><td><span class="mchip" style="border-color:${c};color:${c}">${MODELS[r.model].label}</span></td><td>+${r.lead}d</td><td class="num">${fmt1(r.predicted)}</td><td class="num">${fmt1(r.actual)}</td><td class="num ${e>=0?"err-pos":"err-neg"}">${e>=0?"+":""}${fmt1(e)}</td></tr>`;});
+  box.innerHTML=h+"</table>";
 })();
 </script>
 </body>
