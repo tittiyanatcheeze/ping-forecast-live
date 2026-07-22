@@ -152,6 +152,14 @@ footer b{color:var(--ink-2)}
     <div id="chart-main"></div>
   </div>
 
+  <!-- forecast zoom -->
+  <div class="card pad">
+    <h2>🔍 โฟกัสพยากรณ์ 1–7 วัน — ขยายให้เห็นความต่างของโมเดล</h2>
+    <div class="hint">แกนตั้งซูมเฉพาะช่วงค่าพยากรณ์ (ไม่เริ่มจาก 0) · ตัวเลขปลายเส้น = ค่าที่ +7 วัน · ชี้เมาส์เพื่อดูทุก lead</div>
+    <div class="legend" id="lg-zoom"></div>
+    <div id="chart-zoom"></div>
+  </div>
+
   <div class="grid2">
     <div class="card pad">
       <h2>ฝนพยากรณ์รายวัน</h2>
@@ -305,6 +313,71 @@ function elm(svg,n,a,t){const e=document.createElementNS(NS,n);for(const k in a)
     if(hh)h+=`<div class="row"><span>ค่าจริง</span><span>${fmt1(hh.q)}</span></div>`;
     for(const[m,cfg]of Object.entries(MODELS)){const f=d.forecasts.find(z=>z.model===m&&z.target_date===dd);
       if(f)h+=`<div class="row"><span style="color:${col(cfg.color)}">●</span><span>${fmt1(f.predicted)} <span style="color:var(--ink-3)">+${f.lead}d</span></span></div>`;}
+    showTip(h,ev.clientX,ev.clientY);
+  });
+  svg.addEventListener("mouseleave",()=>{hideTip();xh.setAttribute("visibility","hidden");});
+})();
+
+// ── forecast zoom (auto y-scale, end labels) ──────────────
+(function(){
+  const d=DATA;
+  const leads=[...new Set(d.forecasts.map(f=>f.lead))].sort((a,b)=>a-b);
+  const lastQ=d.history[d.history.length-1].q;
+  const cols=[0,...leads];                         // 0 = ตอนนี้
+  const models=Object.keys(MODELS);
+  const valAt=(m,c)=>c===0?lastQ:(d.forecasts.find(f=>f.model===m&&f.lead===c)||{}).predicted;
+  const W=980,H=310,L=46,Rr=150,T=18,B=40,IW=W-L-Rr,IH=H-T-B;
+  const xAt=i=>L+IW*(i/(cols.length-1));
+  const all=[lastQ,...d.forecasts.map(f=>f.predicted)];
+  let vmin=Math.min(...all),vmax=Math.max(...all);
+  const pad=(vmax-vmin)*0.14||5; vmin-=pad; vmax+=pad;
+  const y=v=>T+IH*(1-(v-vmin)/(vmax-vmin));
+  const svg=document.createElementNS(NS,"svg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("style","width:100%;height:auto");svg.id="svg-zoom";
+  const add=(n,a,t)=>elm(svg,n,a,t);
+  for(let g=0;g<=4;g++){const v=vmin+(vmax-vmin)*g/4;
+    add("line",{x1:L,x2:W-Rr,y1:y(v),y2:y(v),stroke:col("var(--grid)")});
+    add("text",{x:L-8,y:y(v)+4,"text-anchor":"end","font-size":11,fill:col("var(--ink-3)")},Math.round(v));}
+  const thr=d.flood_threshold;
+  if(thr<=vmax&&thr>=vmin){add("line",{x1:L,x2:W-Rr,y1:y(thr),y2:y(thr),stroke:col("var(--thresh)"),"stroke-dasharray":"4 4"});}
+  else add("text",{x:L,y:T-4,"font-size":10.5,fill:col("var(--thresh)")},`▲ เกณฑ์น้ำท่วม ${thr} m³/s อยู่เหนือกราฟ`);
+  const xo=xAt(0);
+  add("line",{x1:xo,x2:xo,y1:T,y2:T+IH,stroke:col("var(--ink-3)"),"stroke-dasharray":"2 4"});
+  cols.forEach((c,i)=>add("text",{x:xAt(i),y:T+IH+18,"text-anchor":"middle","font-size":11,fill:col("var(--ink-2)")},c===0?"ตอนนี้":`+${c}d`));
+  // lines + markers
+  const lg=document.getElementById("lg-zoom");lg.innerHTML="";
+  const ends=[];
+  for(const m of models){const cfg=MODELS[m],c=col(cfg.color);
+    const pts=cols.map((cc,i)=>[xAt(i),y(valAt(m,cc))]);
+    add("path",{d:pts.map((p,i)=>`${i?"L":"M"}${p[0]},${p[1]}`).join(" "),fill:"none",stroke:c,
+      "stroke-width":2.4,"stroke-dasharray":cfg.dash||"none"});
+    pts.forEach((p,i)=>{if(i===0)return;
+      if(cfg.marker==="diamond"){const s=4.5;add("rect",{x:p[0]-s,y:p[1]-s,width:2*s,height:2*s,fill:c,stroke:"#fff","stroke-width":1.6,transform:`rotate(45 ${p[0]} ${p[1]})`});}
+      else add("circle",{cx:p[0],cy:p[1],r:4.5,fill:c,stroke:"#fff","stroke-width":1.6});});
+    ends.push({m,c,val:valAt(m,cols[cols.length-1]),y:y(valAt(m,cols[cols.length-1]))});
+    lg.innerHTML+=`<span><span class="sw" style="background:${c}"></span>${cfg.label}</span>`;
+  }
+  // de-collide end labels
+  ends.sort((a,b)=>a.y-b.y);const gap=17;
+  for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<gap)ends[i].y=ends[i-1].y+gap;
+  const over=ends[ends.length-1].y-(T+IH);if(over>0)ends.forEach(e=>e.y-=over);
+  const lx=xAt(cols.length-1);
+  ends.forEach(e=>{
+    add("line",{x1:lx+4,y1:y(e.val),x2:lx+16,y2:e.y,stroke:e.c,"stroke-width":1,"stroke-opacity":.5});
+    add("circle",{cx:lx+4,cy:y(e.val),r:2.5,fill:e.c});
+    add("text",{x:lx+20,y:e.y+4,"font-size":12,"font-weight":700,fill:e.c},fmt1(e.val));
+    add("text",{x:lx+52,y:e.y+4,"font-size":10.5,fill:col("var(--ink-2)")},MODELS[e.m].label.replace(/ \(.*\)/,"").replace("XGB ","").replace("LSTM ","LSTM "));
+  });
+  const xh=add("line",{x1:0,x2:0,y1:T,y2:T+IH,stroke:col("var(--ink-3)"),"stroke-width":1,visibility:"hidden"});
+  add("rect",{x:L,y:T,width:IW+Rr-L+L,height:IH,fill:"transparent"});
+  document.getElementById("chart-zoom").appendChild(svg);
+  svg.addEventListener("mousemove",ev=>{
+    const rc=svg.getBoundingClientRect(),sx=W/rc.width,px=(ev.clientX-rc.left)*sx;
+    let i=0,best=1e9;cols.forEach((c,j)=>{const dd=Math.abs(px-xAt(j));if(dd<best){best=dd;i=j;}});
+    xh.setAttribute("x1",xAt(i));xh.setAttribute("x2",xAt(i));xh.setAttribute("visibility","visible");
+    const c=cols[i];let h=`<b>${c===0?"ค่าปัจจุบัน":"+"+c+" วัน"}</b>`;
+    if(c===0)h+=`<div class="row"><span>ค่าจริง P.1</span><span>${fmt1(lastQ)}</span></div>`;
+    else models.forEach(m=>h+=`<div class="row"><span style="color:${col(MODELS[m].color)}">●</span><span>${fmt1(valAt(m,c))}</span></div>`);
     showTip(h,ev.clientX,ev.clientY);
   });
   svg.addEventListener("mouseleave",()=>{hideTip();xh.setAttribute("visibility","hidden");});
