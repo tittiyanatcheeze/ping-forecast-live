@@ -240,7 +240,7 @@ def main():
     payload = {
         "generated_at": now.strftime("%Y-%m-%d %H:%M"), "origin_date": origin.isoformat(),
         "flood_threshold": FLOOD_THRESHOLD,
-        "p1_now": {"q": float(q_now), "level": p1_level.get(o, None), "level_limit": 3.70},
+        "p1_now": {"q": float(q_now), "level": p1_level.get(o.date(), None), "level_limit": 3.70},
         "upstream": [{"name": st, "q": float(q_df.loc[o, st]),
                       "q_prev": float(q_df.loc[o - pd.Timedelta(days=1), st])}
                      for st in ["P.67", "P.20", "P.75"]],
