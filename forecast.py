@@ -205,7 +205,7 @@ def main():
             })
 
     cols = list(rows[0].keys())
-    log = (pd.read_csv(LOG_CSV, dtype=str) if os.path.exists(LOG_CSV)
+    log = (pd.read_csv(LOG_CSV, dtype=str, keep_default_na=False) if os.path.exists(LOG_CSV)
            else pd.DataFrame(columns=cols))
     new = pd.DataFrame(rows).astype(str)
     key = ["origin_date", "model", "lead"]
